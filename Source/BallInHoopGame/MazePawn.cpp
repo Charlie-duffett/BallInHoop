@@ -32,3 +32,29 @@ void AMazePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 }
 
+// Called to Generate the maze will also store an array of the different face objects
+void AMazePawn::GenerateMaze() {
+	UE_LOG(LogTemp, Warning, TEXT("AMazePawn::GenerateMaze() Called!"));
+	for (int Face = 0; Face < 6; Face++) { // Loop over each face of the cube
+		if (Face % 3 == 0) {
+			// Loop over the columns and rows for the face. 
+			// We do it different here as 1 set of faces will need to be 1 cube wider on all edges
+			for (int Row = 0; Row < 12; Row++) {
+				for (int Col = 0; Col < 12; Col++) {
+
+				}
+			}
+		}
+		else {
+
+		}
+	}
+}
+
+void AMazePawn::GenerateMazeTop() {
+
+}
+
+void AMazePawn::GenerateMazeBottom() {
+
+}

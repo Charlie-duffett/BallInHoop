@@ -19,6 +19,13 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintCallable)
+	void GenerateMaze();
+
+	void GenerateMazeTop();
+	void GenerateMazeBottom();
+	
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
