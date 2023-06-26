@@ -6,6 +6,8 @@
 #include "GameFramework/Pawn.h"
 #include "MazePawn.generated.h"
 
+class UStaticMesh;
+
 UCLASS()
 class BALLINHOOPGAME_API AMazePawn : public APawn
 {
@@ -14,17 +16,22 @@ class BALLINHOOPGAME_API AMazePawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	AMazePawn();
+	UFUNCTION(BlueprintCallable)
+	void GenerateMaze();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintCallable)
-	void GenerateMaze();
+	UPROPERTY(EditDefaultsOnly)
+	UStaticMesh* CubeMeshAsset;
 
-	void GenerateMazeTop();
-	void GenerateMazeBottom();
-	
+	void GenerateMazeTop(int Face);
+	void GenerateMazeBottom(int Face);
+
+	void AddStaticMeshToXFace(int Row, int Col, bool bSecondPass);
+	void AddStaticMeshToYFace(int Row, int Col, bool bSecondPass);
+	void AddStaticMeshToZFace(int Row, int Col, bool bSecondPass);
 
 public:	
 	// Called every frame
