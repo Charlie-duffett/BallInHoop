@@ -16,12 +16,12 @@ class BALLINHOOPGAME_API AMazePawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	AMazePawn();
-	UFUNCTION(BlueprintCallable)
-	void GenerateMaze();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	int MazeCubeCounter = 0;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* MazeBaseCubeComponent;
@@ -31,13 +31,14 @@ protected:
 
 
 	void AddMazeCubes();
+	void AddMazeCubesTop(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, bool bSecondPass);
+	void AddMazeCubesSide(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, bool bSecondPass, int Face);
+	
+	FVector GetMazeCubeXVector(bool bSecondPass, int Row, int Col);
+	FVector GetMazeCubeYVector(bool bSecondPass, int Row, int Col);
+	FVector GetMazeCubeZVector(bool bSecondPass, int Row, int Col);
 
-	void GenerateMazeTop(int Face);
-	void GenerateMazeBottom(int Face);
-
-	void AddStaticMeshToXFace(int Row, int Col, bool bSecondPass);
-	void AddStaticMeshToYFace(int Row, int Col, bool bSecondPass);
-	void AddStaticMeshToZFace(int Row, int Col, bool bSecondPass);
+	void AddMazeCubeComponent(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, FTransform Transform);
 
 public:	
 	// Called every frame

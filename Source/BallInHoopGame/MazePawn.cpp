@@ -77,86 +77,106 @@ void AMazePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 }
 
 void AMazePawn::AddMazeCubes() { 
-	int counter = 0;
 	static auto CubeMeshAsset = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
 
 	for (int Face = 0; Face < 6; Face++) { // Loop over each face of the cube
 		// We need to do 2 slightly different loops depending if the face is a "top piece" or "side piece" :D
 		// See GenerateMazeTop or GenerateMazeBottom for more info
 		if (Face % 3 == 0) {
-			bool bSecondPass = Face > 2;
-			for (int Row = 0; Row < 12; Row++) {
-				for (int Col = 0; Col < 12; Col++) {
-					// Work out the relative position of the static mesh.
-					int x, y, z;
-					x = -550 + ((int)bSecondPass * 1100); // If it is the 2nd pass we want to move the position to the other side
-					y = -550 + (Row * 100);
-					z = -550 + (Col * 100);
-
-					FVector RelativePos(x, y, z);
-
-					FTransform Transform(RelativePos);
-
-					//Create new static mesh object
-					UStaticMeshComponent* CubeMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(*FString::Printf(TEXT("MazeCube %s"), *FString::FromInt(counter++)));
-					if (CubeMeshComponent)
-					{
-						if (CubeMeshAsset.Succeeded())
-						{
-							UE_LOG(LogTemp, Log, TEXT("CubeMeshAssetNew Exists!"));
-							// Set the static mesh of the cube component
-							CubeMeshComponent->Mobility = EComponentMobility::Movable;
-							CubeMeshComponent->CastShadow = false;
-							CubeMeshComponent->SetStaticMesh(CubeMeshAsset.Object);
-						}
-						else {
-							UE_LOG(LogTemp, Error, TEXT("CubeMeshAssetNew Is Missing!"));
-						}
-
-						// Attach the cube component to the root component or another desired parent component
-						if (MazeBaseCubeComponent) {
-							UE_LOG(LogTemp, Log, TEXT("MazeBaseCubeComponent Exists!"));
-							CubeMeshComponent->SetupAttachment(MazeBaseCubeComponent);
-							MazeBaseCubeComponent->RegisterComponent();
-						}
-						else {
-							UE_LOG(LogTemp, Error, TEXT("MazeBaseCubeComponent is Missing!!"));
-						}
-
-						CubeMeshComponent->SetRelativeTransform(Transform);
-					}
-				}
-			}
+			AddMazeCubesTop(CubeMeshAsset, Face > 2);
 		}
 		else {
+			AddMazeCubesSide(CubeMeshAsset, Face > 2, Face);
+		}
+	}
+	UE_LOG(LogTemp, Log, TEXT("Counter Total: %d"), MazeCubeCounter);
+}
+
+void AMazePawn::AddMazeCubesTop(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, bool bSecondPass) {
+	for (int Row = 0; Row < 12; Row++) {
+		for (int Col = 0; Col < 12; Col++) {
+			FVector RelativePos = GetMazeCubeZVector(bSecondPass, Row, Col);
+			FTransform Transform(RelativePos);
+			AddMazeCubeComponent(CubeMeshAsset, Transform);
 		}
 	}
 }
 
-// Called to Generate the maze will also store an array of the different face objects
-void AMazePawn::GenerateMaze() {
-	UE_LOG(LogTemp, Log, TEXT("AMazePawn::GenerateMaze() Called!"));
-	
+void AMazePawn::AddMazeCubesSide(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, bool bSecondPass, int Face) {
+	FVector RelativePos;
+	for (int Row = 0; Row < 10; Row++) {
+		for (int Col = 0; Col < 11; Col++) {
+			if (Face % 3 == 1) {
+				RelativePos = GetMazeCubeXVector(bSecondPass, Row, Col);
+			}
+			else {
+				RelativePos = GetMazeCubeYVector(bSecondPass, Row, Col);
+				UE_LOG(LogTemp, Log, TEXT("Value of bSecondPass %d"), (int)bSecondPass);
+			}
+			
+			FTransform Transform(RelativePos);
+			AddMazeCubeComponent(CubeMeshAsset, Transform);
+		}
+	}
 }
 
-// GenerateMazeTop will loop 2 extra times on row and once extra on column to fill or the edges.
-// This stops one corner piece being left over if all sides try to fill in 2 edges.
-void AMazePawn::GenerateMazeTop(int Face) {
-	
+void AMazePawn::AddMazeCubeComponent(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, FTransform Transform) {
+	//Create new static mesh object
+	UStaticMeshComponent* CubeMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(*FString::Printf(TEXT("MazeCube %s"), *FString::FromInt(MazeCubeCounter++)));
+	if (CubeMeshComponent)
+	{
+		if (CubeMeshAsset.Succeeded())
+		{
+			//UE_LOG(LogTemp, Log, TEXT("CubeMeshAssetNew Exists!"));
+			// Set the static mesh of the cube component
+			CubeMeshComponent->Mobility = EComponentMobility::Movable;
+			CubeMeshComponent->CastShadow = false;
+			CubeMeshComponent->SetStaticMesh(CubeMeshAsset.Object);
+		}
+		else {
+			UE_LOG(LogTemp, Error, TEXT("CubeMeshAssetNew Is Missing!"));
+		}
+
+		// Attach the cube component to the root component or another desired parent component
+		if (MazeBaseCubeComponent) {
+			//UE_LOG(LogTemp, Log, TEXT("MazeBaseCubeComponent Exists!"));
+			CubeMeshComponent->SetupAttachment(MazeBaseCubeComponent);
+			MazeBaseCubeComponent->RegisterComponent();
+		}
+		else {
+			UE_LOG(LogTemp, Error, TEXT("MazeBaseCubeComponent is Missing!!"));
+		}
+
+		CubeMeshComponent->SetRelativeTransform(Transform);
+	}
 }
 
-void AMazePawn::GenerateMazeBottom(int Face) {
-	
+FVector AMazePawn::GetMazeCubeXVector(bool bSecondPass, int Row, int Col) {
+	// Work out the relative position of the static mesh.
+	int x, y, z;
+	x = -550 + ((int)bSecondPass * 1100); 
+	y = -450 + (Col * 100) + (-100 * (int)bSecondPass);// We want alternate which side has the extra col
+	z = -450 + (Row * 100);
+
+	return FVector(x, y, z);
 }
 
-void AMazePawn::AddStaticMeshToXFace(int Row, int Col, bool bSecondPass) {
-	
+FVector AMazePawn::GetMazeCubeYVector(bool bSecondPass, int Row, int Col) {
+	// Work out the relative position of the static mesh.
+	int x, y, z;
+	x = -450 + (Col * 100 + (-100 * (int)!bSecondPass)); // We do the opposite here as we dont want to add the extra col on the same space
+	y = -550 + ((int)bSecondPass * 1100);// If it is the 2nd pass we want to move the position to the other side
+	z = -450 + (Row * 100); 
+
+	return FVector(x, y, z);
 }
 
-void AMazePawn::AddStaticMeshToYFace(int Row, int Col, bool bSecondPass) {
+FVector AMazePawn::GetMazeCubeZVector(bool bSecondPass, int Row, int Col) {
+	// Work out the relative position of the static mesh.
+	int x, y, z;
+	x = -550 + (Row * 100);
+	y = -550 + (Col * 100); // Here we will always have an extra col so we dont need any logic
+	z = -550 + ((int)bSecondPass * 1100);// If it is the 2nd pass we want to move the position to the other side
 
-}
-
-void AMazePawn::AddStaticMeshToZFace(int Row, int Col, bool bSecondPass) {
-
+	return FVector(x, y, z);
 }
