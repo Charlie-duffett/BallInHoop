@@ -23,8 +23,14 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditDefaultsOnly)
-	UStaticMesh* CubeMeshAsset;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UStaticMeshComponent* MazeBaseCubeComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USceneComponent* DefaultSceneRootComponent;
+
+
+	void AddMazeCubes();
 
 	void GenerateMazeTop(int Face);
 	void GenerateMazeBottom(int Face);
