@@ -47,19 +47,53 @@ AMazePawn::AMazePawn()
 		{
 			UE_LOG(LogTemp, Error, TEXT("MazeBase Is Missing!"));
 		}
-
-		
 	}
 
 	AddMazeCubes();
 	UE_LOG(LogTemp, Log, TEXT("Constructor Ran!"));
+	
 }
 
 // Called when the game starts or when spawned
 void AMazePawn::BeginPlay()
 {
 	Super::BeginPlay();
-	//GenerateMaze();
+	
+	// Draw line across each face to prove GetCubeIndex function
+	for (int Face = 0; Face < 6; Face++) {
+		if (Face % 3 == 0) {
+			int Row = MazeTopHeight / 2;
+			for (int Col = 0; Col < MazeTopWidth; Col++) {
+				int Index = GetCubeIndex(Face, Row, Col);
+				MazeCubeComponents[Index]->DestroyComponent();
+				MazeCubeComponents[Index] = nullptr;
+			}
+		}
+		else {
+			int Row = MazeSideHeight / 2;
+			for (int Col = 0; Col < MazeSideWidth; Col++) {
+				int Index = GetCubeIndex(Face, Row, Col);
+				MazeCubeComponents[Index]->DestroyComponent();
+				MazeCubeComponents[Index] = nullptr;
+			}
+		}
+	}
+
+}
+
+void AMazePawn::EndPlay(EEndPlayReason::Type EndReason)
+{
+	Super::EndPlay(EndReason);
+	// Iterate through the array and destroy each component
+	for (UStaticMeshComponent* MeshComponent : MazeCubeComponents)
+	{
+		if (MeshComponent != nullptr) { // Clean up none deleted elements
+			MeshComponent->DestroyComponent();
+		}
+	}
+
+	// Clear the array
+	MazeCubeComponents.Empty();
 }
 
 // Called every frame
@@ -79,7 +113,7 @@ void AMazePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void AMazePawn::AddMazeCubes() { 
 	static auto CubeMeshAsset = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
 
-	for (int Face = 0; Face < 6; Face++) { // Loop over each face of the cube
+	for (int Face = 0; Face < MaxFaces; Face++) { // Loop over each face of the cube
 		// We need to do 2 slightly different loops depending if the face is a "top piece" or "side piece" :D
 		// See GenerateMazeTop or GenerateMazeBottom for more info
 		if (Face % 3 == 0) {
@@ -90,11 +124,12 @@ void AMazePawn::AddMazeCubes() {
 		}
 	}
 	UE_LOG(LogTemp, Log, TEXT("Counter Total: %d"), MazeCubeCounter);
+	UE_LOG(LogTemp, Log, TEXT("Max Index Total: %d"), GetCubeIndex(5, 9, 10));
 }
 
 void AMazePawn::AddMazeCubesTop(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, bool bSecondPass) {
-	for (int Row = 0; Row < 12; Row++) {
-		for (int Col = 0; Col < 12; Col++) {
+	for (int Row = 0; Row < MazeTopHeight; Row++) {
+		for (int Col = 0; Col < MazeTopWidth; Col++) {
 			FVector RelativePos = GetMazeCubeZVector(bSecondPass, Row, Col);
 			FTransform Transform(RelativePos);
 			AddMazeCubeComponent(CubeMeshAsset, Transform);
@@ -104,8 +139,8 @@ void AMazePawn::AddMazeCubesTop(ConstructorHelpers::FObjectFinder<UStaticMesh> C
 
 void AMazePawn::AddMazeCubesSide(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, bool bSecondPass, int Face) {
 	FVector RelativePos;
-	for (int Row = 0; Row < 10; Row++) {
-		for (int Col = 0; Col < 11; Col++) {
+	for (int Row = 0; Row < MazeSideHeight; Row++) {
+		for (int Col = 0; Col < MazeSideWidth; Col++) {
 			if (Face % 3 == 1) {
 				RelativePos = GetMazeCubeXVector(bSecondPass, Row, Col);
 			}
@@ -118,6 +153,57 @@ void AMazePawn::AddMazeCubesSide(ConstructorHelpers::FObjectFinder<UStaticMesh> 
 			AddMazeCubeComponent(CubeMeshAsset, Transform);
 		}
 	}
+}
+
+FVector AMazePawn::GetMazeCubeXVector(bool bSecondPass, int Row, int Col) const {
+	// Work out the relative position of the static mesh.
+	int x, y, z;
+	x = -550 + ((int)bSecondPass * 1100); 
+	y = -450 + (Col * 100) + (-100 * (int)bSecondPass);// We want alternate which side has the extra col
+	z = -450 + (Row * 100);
+
+	return FVector(x, y, z);
+}
+
+FVector AMazePawn::GetMazeCubeYVector(bool bSecondPass, int Row, int Col) const  {
+	// Work out the relative position of the static mesh.
+	int x, y, z;
+	x = -450 + (Col * 100 + (-100 * (int)!bSecondPass)); // We do the opposite here as we dont want to add the extra col on the same space
+	y = -550 + ((int)bSecondPass * 1100);// If it is the 2nd pass we want to move the position to the other side
+	z = -450 + (Row * 100); 
+
+	return FVector(x, y, z);
+}
+
+FVector AMazePawn::GetMazeCubeZVector(bool bSecondPass, int Row, int Col) const  {
+	// Work out the relative position of the static mesh.
+	int x, y, z;
+	x = -550 + (Row * 100);
+	y = -550 + (Col * 100); // Here we will always have an extra col so we dont need any logic
+	z = -550 + ((int)bSecondPass * 1100);// If it is the 2nd pass we want to move the position to the other side
+
+	return FVector(x, y, z);
+}
+
+int AMazePawn::GetCubeIndex(int Face, int Row, int Col) {
+	int Index = 0;
+	for (int i = 0; i < Face; i++) { // Loop over all the previous faces to workout the index before the current face.
+		if (i % 3 == 0) { // If its a "top" part of the maze then it will cover more indexes
+			Index += MazeTopWidth * MazeTopHeight;
+		}
+		else {
+			Index += MazeSideWidth * MazeSideHeight;
+		}
+	}
+
+	if (Face % 3 == 0) { // If its a "top" part of the maze then it will cover more indexes
+		Index += (Row * MazeTopWidth) + Col; // add the index of where it would be on the current face.
+	}
+	else {
+		Index += (Row * MazeSideWidth) + Col; // add the index of where it would be on the current face.
+	}
+	
+	return Index;
 }
 
 void AMazePawn::AddMazeCubeComponent(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, FTransform Transform) {
@@ -148,35 +234,10 @@ void AMazePawn::AddMazeCubeComponent(ConstructorHelpers::FObjectFinder<UStaticMe
 		}
 
 		CubeMeshComponent->SetRelativeTransform(Transform);
+		MazeCubeComponents.Push(CubeMeshComponent); // We dont care about a return value so we call push instead of add
 	}
 }
 
-FVector AMazePawn::GetMazeCubeXVector(bool bSecondPass, int Row, int Col) {
-	// Work out the relative position of the static mesh.
-	int x, y, z;
-	x = -550 + ((int)bSecondPass * 1100); 
-	y = -450 + (Col * 100) + (-100 * (int)bSecondPass);// We want alternate which side has the extra col
-	z = -450 + (Row * 100);
-
-	return FVector(x, y, z);
-}
-
-FVector AMazePawn::GetMazeCubeYVector(bool bSecondPass, int Row, int Col) {
-	// Work out the relative position of the static mesh.
-	int x, y, z;
-	x = -450 + (Col * 100 + (-100 * (int)!bSecondPass)); // We do the opposite here as we dont want to add the extra col on the same space
-	y = -550 + ((int)bSecondPass * 1100);// If it is the 2nd pass we want to move the position to the other side
-	z = -450 + (Row * 100); 
-
-	return FVector(x, y, z);
-}
-
-FVector AMazePawn::GetMazeCubeZVector(bool bSecondPass, int Row, int Col) {
-	// Work out the relative position of the static mesh.
-	int x, y, z;
-	x = -550 + (Row * 100);
-	y = -550 + (Col * 100); // Here we will always have an extra col so we dont need any logic
-	z = -550 + ((int)bSecondPass * 1100);// If it is the 2nd pass we want to move the position to the other side
-
-	return FVector(x, y, z);
+void AMazePawn::GenerateMaze() {
+	
 }

@@ -20,8 +20,16 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(EEndPlayReason::Type Reason) override;
 
 	int MazeCubeCounter = 0;
+	const int MaxFaces = 6;
+	const int MazeTopWidth = 12;
+	const int MazeTopHeight = 12;
+	const int MazeSideWidth = 11;
+	const int MazeSideHeight = 10;
+
+	TArray<UStaticMeshComponent*> MazeCubeComponents;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* MazeBaseCubeComponent;
@@ -34,11 +42,14 @@ protected:
 	void AddMazeCubesTop(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, bool bSecondPass);
 	void AddMazeCubesSide(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, bool bSecondPass, int Face);
 	
-	FVector GetMazeCubeXVector(bool bSecondPass, int Row, int Col);
-	FVector GetMazeCubeYVector(bool bSecondPass, int Row, int Col);
-	FVector GetMazeCubeZVector(bool bSecondPass, int Row, int Col);
+	FVector GetMazeCubeXVector(bool bSecondPass, int Row, int Col) const;
+	FVector GetMazeCubeYVector(bool bSecondPass, int Row, int Col) const;
+	FVector GetMazeCubeZVector(bool bSecondPass, int Row, int Col) const;
+
+	int GetCubeIndex(int Face, int Row, int Col);
 
 	void AddMazeCubeComponent(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, FTransform Transform);
+	void GenerateMaze();
 
 public:	
 	// Called every frame
