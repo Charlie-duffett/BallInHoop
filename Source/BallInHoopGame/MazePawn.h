@@ -46,7 +46,7 @@ protected:
 	const int MazeTopWidth = 12;
 	const int MazeTopHeight = 12;
 	const int MazeSideWidth = 11;
-	const int MazeSideHeight = 12;
+	const int MazeSideHeight = 10;
 
 	TArray<FMazeCell> MazeCubeComponents;
 

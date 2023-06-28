@@ -326,14 +326,14 @@ bool AMazePawn::IsLeftMazeCell(int Face, int Row, int Col) {
 	if (NewCol < 0) {// If col is less than 0 we need to move onto the face to the left of this one
 		
 	}
-
+	return false;
 }
 bool AMazePawn::IsUpMazeCell(int Face, int Row, int Col) {
-
+	return false;
 }
 bool AMazePawn::IsRightMazeCell(int Face, int Row, int Col) {
-
+	return false;
 }
 bool AMazePawn::IsDownMazeCell(int Face, int Row, int Col) {
-
+	return false;
 }
