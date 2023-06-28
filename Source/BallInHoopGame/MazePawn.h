@@ -46,10 +46,9 @@ protected:
 	const int MazeTopWidth = 12;
 	const int MazeTopHeight = 12;
 	const int MazeSideWidth = 11;
-	const int MazeSideHeight = 10;
+	const int MazeSideHeight = 12;
 
 	TArray<FMazeCell> MazeCubeComponents;
-	//TArray<FMazeCell*> MazeCurrentTrail; this might be part of the generate maze component
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* MazeBaseCubeComponent;
@@ -69,7 +68,17 @@ protected:
 	int GetCubeIndex(int Face, int Row, int Col);
 
 	void AddMazeCubeComponent(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, FTransform Transform);
+	
 	void GenerateMaze();
+	void GenerateMazeTop(int Face);
+	void GenerateMazeSide(int Face);
+	void LoopErasedWalk(int Face, int Row, int Col);
+
+	bool IsNextToMazeCell(int Face, int Row, int Col);
+	bool IsLeftMazeCell(int Face, int Row, int Col);
+	bool IsUpMazeCell(int Face, int Row, int Col);
+	bool IsRightMazeCell(int Face, int Row, int Col);
+	bool IsDownMazeCell(int Face, int Row, int Col);
 
 public:	
 	// Called every frame

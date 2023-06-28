@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Misc/CString.h"
+#include "Math/UnrealMathUtility.h"
 #include "UObject/ConstructorHelpers.h"
 
 
@@ -58,26 +59,8 @@ AMazePawn::AMazePawn()
 void AMazePawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	// Draw line across each face to prove GetCubeIndex function
-	for (int Face = 0; Face < 6; Face++) {
-		if (Face % 3 == 0) {
-			int Row = MazeTopHeight / 2;
-			for (int Col = 0; Col < MazeTopWidth; Col++) {
-				int Index = GetCubeIndex(Face, Row, Col);
-				MazeCubeComponents[Index].CellComponent->DestroyComponent();
-				MazeCubeComponents[Index].CellComponent = nullptr;
-			}
-		}
-		else {
-			int Row = MazeSideHeight / 2;
-			for (int Col = 0; Col < MazeSideWidth; Col++) {
-				int Index = GetCubeIndex(Face, Row, Col);
-				MazeCubeComponents[Index].CellComponent->DestroyComponent();
-				MazeCubeComponents[Index].CellComponent = nullptr;
-			}
-		}
-	}
+
+	GenerateMaze();
 
 }
 
@@ -180,7 +163,7 @@ FVector AMazePawn::GetMazeCubeZVector(bool bSecondPass, int Row, int Col) const 
 	int x, y, z;
 	x = -550 + (Row * 100);
 	y = -550 + (Col * 100); // Here we will always have an extra col so we dont need any logic
-	z = -550 + ((int)bSecondPass * 1100);// If it is the 2nd pass we want to move the position to the other side
+	z = 550 + ((int)bSecondPass * -1100);// If it is the 2nd pass we want to move the position to the other side
 
 	return FVector(x, y, z);
 }
@@ -254,5 +237,103 @@ void AMazePawn::GenerateMaze() {
 	// When it hits a part that is already in the maze loop through all of the trail
 	// and set bInCurrentPath aswell as destory all the components leaving the pointer as a nullptr.
 	// repeat until there are no places left
+
+	// First we remove one cube to set something to be part of the maze.
+	int Index = GetCubeIndex(0, 5, 5);
+	MazeCubeComponents[Index].CellComponent->DestroyComponent();
+	MazeCubeComponents[Index].CellComponent = nullptr;
+
+	// Now we just loop through the whole array to randomly generate the maze
+	for (int Face = 0; Face < MaxFaces; Face++) { // Loop over each face of the cube
+		// We need to do 2 slightly different loops depending if the face is a "top piece" or "side piece" :D
+		// See GenerateMazeTop or GenerateMazeBottom for more info
+		if (Face % 3 == 0) {
+			
+		}
+		else {
+			
+		}
+	}
+}
+
+void AMazePawn::GenerateMazeTop(int Face) {
+	for (int Row = 0; Row < MazeTopHeight; Row++) {
+		for (int Col = 0; Col < MazeTopWidth; Col++) {
+
+		}
+	}
+}
+
+void AMazePawn::GenerateMazeSide(int Face) {
+	for (int Row = 0; Row < MazeSideHeight; Row++) {
+		for (int Col = 0; Col < MazeSideWidth; Col++) {
+
+		}
+	}
+}
+
+void AMazePawn::LoopErasedWalk(int Face, int Row, int Col) {
+	int CurrentFace = Face;
+	int CurrentRow = Row;
+	int CurrentCol = Col;
+	int CurrentIndex = GetCubeIndex(CurrentFace, CurrentRow, CurrentCol);
+	TArray<FMazeCell*> MazeCurrentTrail;
+
+	// First Verify that this cell isnt already touching a part of the maze
+	// We must check in every direction
+	if (IsNextToMazeCell(CurrentFace, CurrentRow, CurrentCol)) {
+		// if this is next to a maze cell we want to move to the next cell
+		return;
+	}
+
+	//Push starting point into trail
+	MazeCurrentTrail.Push(&MazeCubeComponents[CurrentIndex]);
+	MazeCubeComponents[CurrentIndex].bInCurrentPath = true;
+
+	bool bSearchingForMazeCell = true;
+
+	while (bSearchingForMazeCell) {
+		// Decide which way to move 0=Left 1=Up 2=Right 3=Down
+		int Direction = FMath::RandRange(0, 3);
+		for (int i = 0; i < 2; i++) {
+			if (Direction == 0) {
+				--CurrentCol;
+			}
+			else if (Direction == 1) {
+				--CurrentRow;
+			}
+			else if (Direction == 2) {
+				++CurrentCol;
+			}
+			else if (Direction == 3) {
+				++CurrentRow;
+			}
+		}
+	}
+}
+
+bool AMazePawn::IsNextToMazeCell(int Face, int Row, int Col) {
+	
+
+
+	return false;
+}
+
+bool AMazePawn::IsLeftMazeCell(int Face, int Row, int Col) {
+	int NewFace = Face;
+	int NewRow = Row;
+	int NewCol = Col - 1;
+	if (NewCol < 0) {// If col is less than 0 we need to move onto the face to the left of this one
+		
+	}
+
+}
+bool AMazePawn::IsUpMazeCell(int Face, int Row, int Col) {
+
+}
+bool AMazePawn::IsRightMazeCell(int Face, int Row, int Col) {
+
+}
+bool AMazePawn::IsDownMazeCell(int Face, int Row, int Col) {
 
 }
