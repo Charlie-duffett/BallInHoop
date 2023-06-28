@@ -65,16 +65,16 @@ void AMazePawn::BeginPlay()
 			int Row = MazeTopHeight / 2;
 			for (int Col = 0; Col < MazeTopWidth; Col++) {
 				int Index = GetCubeIndex(Face, Row, Col);
-				MazeCubeComponents[Index]->DestroyComponent();
-				MazeCubeComponents[Index] = nullptr;
+				MazeCubeComponents[Index].CellComponent->DestroyComponent();
+				MazeCubeComponents[Index].CellComponent = nullptr;
 			}
 		}
 		else {
 			int Row = MazeSideHeight / 2;
 			for (int Col = 0; Col < MazeSideWidth; Col++) {
 				int Index = GetCubeIndex(Face, Row, Col);
-				MazeCubeComponents[Index]->DestroyComponent();
-				MazeCubeComponents[Index] = nullptr;
+				MazeCubeComponents[Index].CellComponent->DestroyComponent();
+				MazeCubeComponents[Index].CellComponent = nullptr;
 			}
 		}
 	}
@@ -85,10 +85,10 @@ void AMazePawn::EndPlay(EEndPlayReason::Type EndReason)
 {
 	Super::EndPlay(EndReason);
 	// Iterate through the array and destroy each component
-	for (UStaticMeshComponent* MeshComponent : MazeCubeComponents)
+	for (FMazeCell MeshComponent : MazeCubeComponents)
 	{
-		if (MeshComponent != nullptr) { // Clean up none deleted elements
-			MeshComponent->DestroyComponent();
+		if (MeshComponent.CellComponent != nullptr) { // Clean up none deleted elements
+			MeshComponent.CellComponent->DestroyComponent();
 		}
 	}
 
@@ -234,10 +234,25 @@ void AMazePawn::AddMazeCubeComponent(ConstructorHelpers::FObjectFinder<UStaticMe
 		}
 
 		CubeMeshComponent->SetRelativeTransform(Transform);
-		MazeCubeComponents.Push(CubeMeshComponent); // We dont care about a return value so we call push instead of add
+		
+		MazeCubeComponents.Push(FMazeCell(CubeMeshComponent)); // We dont care about a return value so we call push instead of add
 	}
 }
 
 void AMazePawn::GenerateMaze() {
-	
+	// Current plan for Maze Generation is to use the erasedLoopWalk Method IE (Wilsons Algorithm)
+	// Start in the same place of the top face of the cube (saves issues later)
+	// First pass will randomly pick a direction to go and move 2 spaces each time untill it hits itself.
+	// Once it has hit itself remove all the cubes in that "trail" and start the actual maze process.
+	// Now we want to start at index 0 in our array and just go from there. This will ensure all places are done.
+	// First check that this place isnt already a part of the maze by verifying CellComponent isnt null
+	// Then double check that this cube isnt directly touching any completed maze piece (to ensure we keep walls inplace)
+	// Then randomly pick a direction and move 2 places. Each time it moves it sets that point to bInCurrentPath=true
+	// If it hits itself on that journey it should pop out all the elements of the trail until it goes
+	// back to the point it has hit. Note it must set bInCurrentPath=false again
+	// then start from that point
+	// When it hits a part that is already in the maze loop through all of the trail
+	// and set bInCurrentPath aswell as destory all the components leaving the pointer as a nullptr.
+	// repeat until there are no places left
+
 }

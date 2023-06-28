@@ -8,6 +8,25 @@
 
 class UStaticMesh;
 
+//Create Struct Datatype to store cells in the maze (Cubes)
+USTRUCT()
+struct FMazeCell {
+	GENERATED_BODY()
+	UPROPERTY(VisibleInstanceOnly)
+	bool bInCurrentPath;
+	UPROPERTY(VisibleInstanceOnly)
+	TWeakObjectPtr<UStaticMeshComponent> CellComponent;
+
+	// Constructors
+	FMazeCell(): CellComponent(nullptr),
+		bInCurrentPath(false) 
+	{}
+	FMazeCell(UStaticMeshComponent* CellComponent): 
+		CellComponent(CellComponent),
+		bInCurrentPath(false)
+	{}
+};
+
 UCLASS()
 class BALLINHOOPGAME_API AMazePawn : public APawn
 {
@@ -29,7 +48,8 @@ protected:
 	const int MazeSideWidth = 11;
 	const int MazeSideHeight = 10;
 
-	TArray<UStaticMeshComponent*> MazeCubeComponents;
+	TArray<FMazeCell> MazeCubeComponents;
+	//TArray<FMazeCell*> MazeCurrentTrail; this might be part of the generate maze component
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* MazeBaseCubeComponent;
