@@ -43,10 +43,10 @@ protected:
 
 	int MazeCubeCounter = 0;
 	const int MaxFaces = 6;
-	const int MazeTopWidth = 12;
-	const int MazeTopHeight = 12;
+	const int MazeTopWidth = 10;
+	const int MazeTopHeight = 10;
 	const int MazeSideWidth = 11;
-	const int MazeSideHeight = 10;
+	const int MazeSideHeight = 12;
 
 	TArray<FMazeCell> MazeCubeComponents;
 

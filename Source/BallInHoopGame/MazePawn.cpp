@@ -143,7 +143,7 @@ FVector AMazePawn::GetMazeCubeXVector(bool bSecondPass, int Row, int Col) const 
 	int x, y, z;
 	x = -550 + ((int)bSecondPass * 1100); 
 	y = -450 + (Col * 100) + (-100 * (int)bSecondPass);// We want alternate which side has the extra col
-	z = -450 + (Row * 100);
+	z = -550 + (Row * 100);
 
 	return FVector(x, y, z);
 }
@@ -153,7 +153,7 @@ FVector AMazePawn::GetMazeCubeYVector(bool bSecondPass, int Row, int Col) const 
 	int x, y, z;
 	x = -450 + (Col * 100 + (-100 * (int)!bSecondPass)); // We do the opposite here as we dont want to add the extra col on the same space
 	y = -550 + ((int)bSecondPass * 1100);// If it is the 2nd pass we want to move the position to the other side
-	z = -450 + (Row * 100); 
+	z = -550 + (Row * 100); 
 
 	return FVector(x, y, z);
 }
@@ -161,8 +161,8 @@ FVector AMazePawn::GetMazeCubeYVector(bool bSecondPass, int Row, int Col) const 
 FVector AMazePawn::GetMazeCubeZVector(bool bSecondPass, int Row, int Col) const  {
 	// Work out the relative position of the static mesh.
 	int x, y, z;
-	x = -550 + (Row * 100);
-	y = -550 + (Col * 100); // Here we will always have an extra col so we dont need any logic
+	x = -450 + (Row * 100);
+	y = -450 + (Col * 100); // Here we will always have an extra col so we dont need any logic
 	z = 550 + ((int)bSecondPass * -1100);// If it is the 2nd pass we want to move the position to the other side
 
 	return FVector(x, y, z);
