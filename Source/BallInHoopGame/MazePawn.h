@@ -13,17 +13,20 @@ USTRUCT()
 struct FMazeCell {
 	GENERATED_BODY()
 	UPROPERTY(VisibleInstanceOnly)
-	bool bInCurrentPath;
+	bool bInCurrentPath = false;
 	UPROPERTY(VisibleInstanceOnly)
-	TWeakObjectPtr<UStaticMeshComponent> CellComponent;
+	int Face = 0;
+	UPROPERTY(VisibleInstanceOnly)
+	int Row = 0;
+	UPROPERTY(VisibleInstanceOnly)
+	int Col = 0;
+	UPROPERTY(VisibleInstanceOnly)
+	TWeakObjectPtr<UStaticMeshComponent> CellComponent = nullptr;
 
 	// Constructors
-	FMazeCell(): CellComponent(nullptr),
-		bInCurrentPath(false) 
-	{}
+	FMazeCell(){}
 	FMazeCell(UStaticMeshComponent* CellComponent): 
-		CellComponent(CellComponent),
-		bInCurrentPath(false)
+		CellComponent(CellComponent)
 	{}
 };
 
@@ -75,10 +78,11 @@ protected:
 	void LoopErasedWalk(int Face, int Row, int Col);
 
 	bool IsNextToMazeCell(int Face, int Row, int Col);
-	bool IsLeftMazeCell(int Face, int Row, int Col);
-	bool IsUpMazeCell(int Face, int Row, int Col);
-	bool IsRightMazeCell(int Face, int Row, int Col);
-	bool IsDownMazeCell(int Face, int Row, int Col);
+	
+	int GetLeftMazeCellIndex(int Face, int Row, int Col);
+	int GetUpMazeCellIndex(int Face, int Row, int Col);
+	int GetRightMazeCellIndex(int Face, int Row, int Col);
+	int GetDownMazeCellIndex(int Face, int Row, int Col);
 
 public:	
 	// Called every frame

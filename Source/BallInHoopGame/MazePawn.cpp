@@ -60,8 +60,84 @@ void AMazePawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GenerateMaze();
+	// Attempt to draw cross on maze
+	//for (int Face = 0; Face < 4; Face++) { 
+	//	if (Face % 3 == 0) {
+	//		for (int Row = 0; Row < MazeTopHeight; Row++) {
+	//			for (int Col = 0; Col < MazeTopWidth; Col++) {
+	//				if (Row == 5) {
+	//					int index = GetCubeIndex(Face, Row, Col);
+	//					MazeCubeComponents[index].CellComponent->DestroyComponent();
+	//				}
+	//			}
+	//		}
+	//	}
+	//	else {
+	//		for (int Row = 0; Row < MazeSideHeight; Row++) {
+	//			for (int Col = 0; Col < MazeSideWidth; Col++) {
+	//				int FaceVal = Face;
+	//				/*if (Face == 1) {
+	//					FaceVal = 5;
+	//				}*/
+	//				if (Col == 6) {
+	//					int index = GetCubeIndex(FaceVal, Row, Col);
+	//					MazeCubeComponents[index].CellComponent->DestroyComponent();
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
 
+	int index = GetCubeIndex(0, 0, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetLeftMazeCellIndex(0, 0, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetDownMazeCellIndex(0, 0, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+
+
+	index = GetCubeIndex(0, MazeTopHeight-1, MazeTopWidth-1);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetUpMazeCellIndex(0, MazeTopHeight - 1, MazeTopWidth - 1);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetRightMazeCellIndex(0, MazeTopHeight - 1, MazeTopWidth - 1);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+
+
+	// Bottom Face
+	index = GetCubeIndex(3, 0, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetLeftMazeCellIndex(3, 0, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetDownMazeCellIndex(3, 0, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+
+
+	index = GetCubeIndex(3, MazeTopHeight - 1, MazeTopWidth - 1);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetUpMazeCellIndex(3, MazeTopHeight - 1, MazeTopWidth - 1);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetRightMazeCellIndex(3, MazeTopHeight - 1, MazeTopWidth - 1);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+
+	//GenerateMaze();
+
+	// Face 1
+	index = GetCubeIndex(1, 4, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetLeftMazeCellIndex(1, 4, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	// Face 2
+	index = GetCubeIndex(2, 5, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetLeftMazeCellIndex(2, 5, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	// Face 4
+	index = GetCubeIndex(4, 6, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	// Face 5
+	index = GetCubeIndex(5, 6, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
 }
 
 void AMazePawn::EndPlay(EEndPlayReason::Type EndReason)
@@ -151,7 +227,7 @@ FVector AMazePawn::GetMazeCubeXVector(bool bSecondPass, int Row, int Col) const 
 FVector AMazePawn::GetMazeCubeYVector(bool bSecondPass, int Row, int Col) const  {
 	// Work out the relative position of the static mesh.
 	int x, y, z;
-	x = -450 + (Col * 100 + (-100 * (int)!bSecondPass)); // We do the opposite here as we dont want to add the extra col on the same space
+	x = (450 + (100 * (int)bSecondPass)) + (Col * -100); // We do the opposite here as we dont want to add the extra col on the same space
 	y = -550 + ((int)bSecondPass * 1100);// If it is the 2nd pass we want to move the position to the other side
 	z = -550 + (Row * 100); 
 
@@ -319,21 +395,131 @@ bool AMazePawn::IsNextToMazeCell(int Face, int Row, int Col) {
 	return false;
 }
 
-bool AMazePawn::IsLeftMazeCell(int Face, int Row, int Col) {
+int AMazePawn::GetLeftMazeCellIndex(int Face, int Row, int Col) {
+	int NewFace = 0;
+	int NewRow = 0;
+	int NewCol = Col - 1;
+	
+	if (NewCol < 0) { // This means we have switched face!
+		if (Face % 3 == 0) {
+			// Face 4/2 has an offset of 1 col
+			if (Face == 0) {
+				NewFace = 2;
+				NewRow = (MazeSideHeight-1); /// Removing one from side height as we start counting from 0
+				NewCol = MazeSideWidth - Row - 2; // Adding one here for our offset
+			}
+			else {
+				NewFace = 2;
+				NewRow = Col; /// Removing one from side height as we start counting from 0
+				NewCol = MazeSideWidth - Row - 2; // Adding one here for our offset
+			}
+		}
+		else {
+			if (Face % 3 == 1) {
+				NewFace = Face+1;
+				NewRow = Row;
+				NewCol = MazeSideWidth - 1;
+			}
+			else {
+				NewFace = Face + 2;
+				NewRow = Row;
+				NewCol = 0;
+				if (NewFace > 5) {
+					NewFace = 1;
+				}
+			}
+		}
+	}
+	return GetCubeIndex(NewFace, NewRow, NewCol); // No new face here so just return the index with the updated col
+}
+
+int AMazePawn::GetUpMazeCellIndex(int Face, int Row, int Col) {
+	int NewFace = Face;
+	int NewRow = Row + 1;
+	int NewCol = Col;
+	if (NewRow == MazeTopHeight && NewFace % 3 == 0) {
+		if (Face == 0) {
+			NewFace = 4;
+			NewRow = MazeSideHeight -1; /// Removing one from side height as we start counting from 0
+			NewCol = Col + 1 ; // Adding one here for our offset
+			return GetCubeIndex(NewFace, NewRow, NewCol);
+		}
+		else {
+			NewFace = 4;
+			NewRow = 0; /// Removing one from side height as we start counting from 0
+			NewCol = Col + 1; // Adding one here for our offset
+			return GetCubeIndex(NewFace, NewRow, NewCol);
+		}
+	}
+	else if (NewRow == MazeSideHeight) {
+
+	}
+	return GetCubeIndex(NewFace, NewRow, NewCol);
+}
+
+int AMazePawn::GetRightMazeCellIndex(int Face, int Row, int Col) {
 	int NewFace = Face;
 	int NewRow = Row;
-	int NewCol = Col - 1;
-	if (NewCol < 0) {// If col is less than 0 we need to move onto the face to the left of this one
-		
+	int NewCol = Col + 1;
+
+	if (NewCol == MazeTopWidth && NewFace % 3 == 0) {
+		if (Face == 0) {
+			NewFace = 5;
+			NewRow = MazeSideHeight -1; /// Removing one from side height as we start counting from 0
+			NewCol = MazeSideWidth - Row - 1;
+			return GetCubeIndex(NewFace, NewRow, NewCol);
+		}
+		else {
+			NewFace = 5;
+			NewRow = 0; /// Removing one from side height as we start counting from 0
+			NewCol = MazeSideWidth - Row - 1;
+			return GetCubeIndex(NewFace, NewRow, NewCol);
+		}
 	}
-	return false;
+	else if (NewRow > MazeSideHeight) {
+		if (Face % 3 == 2) {
+			NewFace = Face - 1;
+			NewRow = Row;
+			NewCol = 0;
+		}
+		else {
+			NewFace = Face - 2;
+			NewRow = Row;
+			NewCol = 0;
+			if (NewFace < 0) {
+				NewFace = 5;
+			}
+		}
+	}
+
+	return GetCubeIndex(NewFace, NewRow, NewCol);
 }
-bool AMazePawn::IsUpMazeCell(int Face, int Row, int Col) {
-	return false;
-}
-bool AMazePawn::IsRightMazeCell(int Face, int Row, int Col) {
-	return false;
-}
-bool AMazePawn::IsDownMazeCell(int Face, int Row, int Col) {
-	return false;
+
+int AMazePawn::GetDownMazeCellIndex(int Face, int Row, int Col) {
+	int NewFace = Face;
+	int NewRow = Row - 1;
+	int NewCol = Col;
+
+	if (NewRow < 0) { // This means we have switched face!
+		if (Face % 3 == 0) {
+			// Face 4/2 has an offset of 1 col
+			if (Face == 0) {
+				NewFace = 1;
+				NewRow = MazeSideHeight - 1; /// Removing one from side height as we start counting from 0
+				NewCol = Col;
+				return GetCubeIndex(NewFace, NewRow, NewCol);
+			}
+			else {
+				NewFace = 1;
+				NewRow = 0; /// Removing one from side height as we start counting from 0
+				NewCol = Col;
+				return GetCubeIndex(NewFace, NewRow, NewCol);
+			}
+		}
+		else {
+
+		}
+	}
+
+	return GetCubeIndex(NewFace, NewRow, NewCol);
 }
