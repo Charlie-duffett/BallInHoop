@@ -25,8 +25,11 @@ struct FMazeCell {
 
 	// Constructors
 	FMazeCell(){}
-	FMazeCell(UStaticMeshComponent* CellComponent): 
-		CellComponent(CellComponent)
+	FMazeCell(UStaticMeshComponent* CellComponent, int Face, int Row, int Col): 
+		CellComponent(CellComponent),
+		Face(Face),
+		Row(Row),
+		Col(Col)
 	{}
 };
 
@@ -70,7 +73,7 @@ protected:
 
 	int GetCubeIndex(int Face, int Row, int Col);
 
-	void AddMazeCubeComponent(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, FTransform Transform);
+	void AddMazeCubeComponent(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, FTransform Transform, int Face, int Row, int Col);
 	
 	void GenerateMaze();
 	void GenerateMazeTop(int Face);
