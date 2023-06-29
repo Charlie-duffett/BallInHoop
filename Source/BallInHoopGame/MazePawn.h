@@ -29,7 +29,8 @@ struct FMazeCell {
 		CellComponent(CellComponent),
 		Face(Face),
 		Row(Row),
-		Col(Col)
+		Col(Col),
+		bInCurrentPath(false)
 	{}
 };
 
