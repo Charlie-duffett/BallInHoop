@@ -60,7 +60,25 @@ void AMazePawn::BeginPlay()
 {
 	Super::BeginPlay();
 
+	int index = GetCubeIndex(1, MazeSideHeight -1, 3);
+
+	/*index = GetCubeIndex(4, 0, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetCubeIndex(4, 0, 2);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetCubeIndex(4, 0, 7);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+
+	index = GetDownMazeCellIndex(4, 0, 0);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetDownMazeCellIndex(4, 0, 2);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();
+	index = GetDownMazeCellIndex(4, 0, 7);
+	MazeCubeComponents[index].CellComponent->DestroyComponent();*/
+
 	GenerateMaze();
+
+	RemoveMazeCells();
 }
 
 void AMazePawn::EndPlay(EEndPlayReason::Type EndReason)
@@ -250,11 +268,10 @@ void AMazePawn::GenerateMaze() {
 
 	// First we remove one cube to set something to be part of the maze.
 	int Index = GetCubeIndex(0, 5, 5);
-	MazeCubeComponents[Index].CellComponent->DestroyComponent();
-	MazeCubeComponents[Index].CellComponent = nullptr;
+	MazeCubeComponents[Index].bInMaze = true;
 
 	//LoopErasedWalk(0, 0, 0);
-
+	//LoopErasedWalk(0, 0, 8);
 	// Now we just loop through the whole array to randomly generate the maze
 	for (int Face = 0; Face < MaxFaces; Face++) { // Loop over each face of the cube
 		// We need to do 2 slightly different loops depending if the face is a "top piece" or "side piece" :D
@@ -293,6 +310,7 @@ void AMazePawn::LoopErasedWalk(int Face, int Row, int Col) {
 
 	// First Verify This isnt already part of the Maze
 	if (MazeCubeComponents[CurrentIndex].CellComponent == nullptr) {
+		//UE_LOG(LogTemp, Error, TEXT("MazeCubeComponents Before Return"));
 		return;
 	}
 
@@ -300,6 +318,7 @@ void AMazePawn::LoopErasedWalk(int Face, int Row, int Col) {
 	// We must check in every direction
 	if (IsNextToMazeCell(CurrentFace, CurrentRow, CurrentCol)) {
 		// if this is next to a maze cell we want to move to the next cell
+		//UE_LOG(LogTemp, Error, TEXT("IsNextToMazeCell Before Return"));
 		return;
 	}
 
@@ -309,9 +328,28 @@ void AMazePawn::LoopErasedWalk(int Face, int Row, int Col) {
 
 	bool bSearchingForMazeCell = true;
 
+	int LastBackwardsDirection = 4; // Direction where we came from
+
 	while (bSearchingForMazeCell) {
 		// Decide which way to move 0=Left 1=Up 2=Right 3=Down
 		int Direction = FMath::RandRange(0, 3);
+
+		if (Direction == LastBackwardsDirection) {
+			bool isValidDirection = false;
+			while (!isValidDirection) {
+				Direction = FMath::RandRange(0, 3);
+				if (LastBackwardsDirection != Direction) {
+					isValidDirection = true;
+				}
+			}
+		}
+
+		LastBackwardsDirection = Direction - 2;
+
+		if (LastBackwardsDirection < 0) {
+			LastBackwardsDirection = 4 + LastBackwardsDirection;
+		}
+
 		for (int i = 0; i < 2; i++) {
 			int Index;
 			if (Direction == 0) {
@@ -331,35 +369,37 @@ void AMazePawn::LoopErasedWalk(int Face, int Row, int Col) {
 			CurrentFace = MazeCubeComponents[Index].Face;
 			CurrentRow = MazeCubeComponents[Index].Row;
 			CurrentCol = MazeCubeComponents[Index].Col;
+			UE_LOG(LogTemp, Warning, TEXT("Current Cell, Face: %d Row: %d Col: %d Cell is null: %d"), CurrentFace, CurrentRow, CurrentCol, (int)(MazeCubeComponents[Index].bInMaze == true));
 
-			if (MazeCubeComponents[Index].bInCurrentPath == true) {
+			MazeCubeComponents[Index].bInCurrentPath = true;
+			MazeCurrentTrail.Push(&MazeCubeComponents[Index]);
+
+			int loopIndex;
+
+			if (IsInLoop(CurrentFace, CurrentRow, CurrentCol, Direction, loopIndex)) {
 				// Oh no! we have hit part of the trail we need to pop all element out until we find that element
+				FMazeCell* LoopedCell = &MazeCubeComponents[loopIndex];
 				int bFoundCorrectCell = false;
 				while (!bFoundCorrectCell) {
 					FMazeCell* PoppedCell = MazeCurrentTrail.Pop();
 					int PoppedFace = PoppedCell->Face;
 					int PoppedRow = PoppedCell->Row;
 					int PoppedCol = PoppedCell->Col;
-					if (CurrentFace == PoppedFace && CurrentRow == PoppedRow && CurrentCol == PoppedCol) {
+					UE_LOG(LogTemp, Error, TEXT("PoppedCell!, Face: %d Row: %d Col: %d"), PoppedFace, PoppedRow, PoppedCol);
+					if (LoopedCell->Face == PoppedFace && LoopedCell->Row == PoppedRow && LoopedCell->Col == PoppedCol) {
 						bFoundCorrectCell = true;
 						// Put cell back into array
 						MazeCurrentTrail.Push(PoppedCell);
+						CurrentFace = PoppedCell->Face;
+						CurrentRow = PoppedCell->Row;
+						CurrentCol = PoppedCell->Col;
 					}
 					else {
 						PoppedCell->bInCurrentPath = false;
 					}
 				}
-				// As we hit a part of the trail we dont need to loop an extra time so just break out of the loop now
-				break;
-			}
-			else {
-				if (MazeCubeComponents[Index].CellComponent == nullptr) {
-					UE_LOG(LogTemp, Error, TEXT("Attempted to put null component"));
-				}
-				else {
-					MazeCubeComponents[Index].bInCurrentPath = true;
-					MazeCurrentTrail.Push(&MazeCubeComponents[Index]);
-				}
+				//Goto next loop itteration
+				continue;
 			}
 
 			// Now Check if we have hit a Maze Cell
@@ -367,11 +407,11 @@ void AMazePawn::LoopErasedWalk(int Face, int Row, int Col) {
 				// Remove all cells in the trail
 				while (MazeCurrentTrail.Num() > 0) {
 					FMazeCell* PoppedCell = MazeCurrentTrail.Pop();
-					PoppedCell->CellComponent->DestroyComponent();
-					PoppedCell->CellComponent = nullptr;
+					PoppedCell->bInMaze = true;
 					PoppedCell->bInCurrentPath = false;
 				}
 				bSearchingForMazeCell = false;
+				break;
 			}
 		}
 	}
@@ -383,16 +423,16 @@ bool AMazePawn::IsNextToMazeCell(int Face, int Row, int Col) {
 	int RightIndex = GetRightMazeCellIndex(Face, Row, Col);
 	int DownIndex = GetDownMazeCellIndex(Face, Row, Col);
 	
-	if (MazeCubeComponents[LeftIndex].CellComponent == nullptr) {
+	if (MazeCubeComponents[LeftIndex].bInMaze == true) {
 		return true;
 	}
-	else if (MazeCubeComponents[UpIndex].CellComponent == nullptr) {
+	else if (MazeCubeComponents[UpIndex].bInMaze == true) {
 		return true;
 	}
-	else if (MazeCubeComponents[RightIndex].CellComponent == nullptr) {
+	else if (MazeCubeComponents[RightIndex].bInMaze == true) {
 		return true;
 	}
-	else if (MazeCubeComponents[DownIndex].CellComponent == nullptr) {
+	else if (MazeCubeComponents[DownIndex].bInMaze == true) {
 		return true;
 	}
 
@@ -470,12 +510,12 @@ int AMazePawn::GetUpMazeCellIndex(int Face, int Row, int Col) {
 			NewCol = Col;
 		}
 		else if (Face == 2) {
-			NewRow = Col - 1;
+			NewRow = MazeTopWidth - 1 - Col;
 			NewCol = 0;
 		}
 		else if (Face == 4) {
 			NewRow = MazeTopHeight - 1;
-			NewCol = Col - 1;
+			NewCol = MazeTopWidth - 1 - Col;
 		}
 		else {
 			NewRow = Col;
@@ -544,10 +584,10 @@ int AMazePawn::GetDownMazeCellIndex(int Face, int Row, int Col) {
 		}
 		else {
 			// If we are on either edge we are actually just going to end up going left/right
-			if (NewCol == 0) {
+			/*if (NewCol == 0) {
 				return GetLeftMazeCellIndex(NewFace, Row, NewCol);
-			}
-			else if (NewCol == MazeSideWidth - 1) {
+			}*/
+			if (NewCol == MazeSideWidth - 1) {
 				return GetRightMazeCellIndex(NewFace, Row, NewCol);
 			}
 			// Now we can worry about going onto Face 0 which will always be above the side faces
@@ -558,12 +598,12 @@ int AMazePawn::GetDownMazeCellIndex(int Face, int Row, int Col) {
 				NewCol = Col;
 			}
 			else if (Face == 2) {
-				NewRow = Col - 1;
+				NewRow = MazeTopWidth - 1 - Col;
 				NewCol = 0;
 			}
 			else if (Face == 4) {
 				NewRow = MazeTopHeight - 1;
-				NewCol = Col - 1;
+				NewCol = MazeTopWidth - 1 - Col;
 			}
 			else {
 				NewRow = Col;
@@ -573,4 +613,44 @@ int AMazePawn::GetDownMazeCellIndex(int Face, int Row, int Col) {
 	}
 
 	return GetCubeIndex(NewFace, NewRow, NewCol);
+}
+
+bool AMazePawn::IsInLoop(int Face, int Row, int Col, int Direction, int& index) {
+	int LeftIndex = GetLeftMazeCellIndex(Face, Row, Col);
+	int UpIndex = GetUpMazeCellIndex(Face, Row, Col);
+	int RightIndex = GetRightMazeCellIndex(Face, Row, Col);
+	int DownIndex = GetDownMazeCellIndex(Face, Row, Col);
+
+	int DirectionOfLastTrailCell = Direction - 2;
+	if (DirectionOfLastTrailCell < 0) {
+		DirectionOfLastTrailCell = 4 + DirectionOfLastTrailCell;
+	}
+
+	if (MazeCubeComponents[LeftIndex].bInCurrentPath == true && DirectionOfLastTrailCell != 0) {
+		index = LeftIndex;
+		return true;
+	}
+	else if (MazeCubeComponents[UpIndex].bInCurrentPath == true && DirectionOfLastTrailCell != 1) {
+		index = UpIndex;
+		return true;
+	}
+	else if (MazeCubeComponents[RightIndex].bInCurrentPath == true && DirectionOfLastTrailCell != 2) {
+		index = RightIndex;
+		return true;
+	}
+	else if (MazeCubeComponents[DownIndex].bInCurrentPath == true && DirectionOfLastTrailCell != 3) {
+		index = DownIndex;
+		return true;
+	}
+
+	return false;
+}
+
+void AMazePawn::RemoveMazeCells() {
+	for (FMazeCell FMazeCell : MazeCubeComponents) {
+		if (FMazeCell.bInMaze) {
+			FMazeCell.CellComponent->DestroyComponent();
+			FMazeCell.CellComponent = nullptr;
+		}
+	}
 }

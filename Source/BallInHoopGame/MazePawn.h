@@ -15,6 +15,8 @@ struct FMazeCell {
 	UPROPERTY(VisibleInstanceOnly)
 	bool bInCurrentPath = false;
 	UPROPERTY(VisibleInstanceOnly)
+	bool bInMaze = false;
+	UPROPERTY(VisibleInstanceOnly)
 	int Face = 0;
 	UPROPERTY(VisibleInstanceOnly)
 	int Row = 0;
@@ -87,6 +89,10 @@ protected:
 	int GetUpMazeCellIndex(int Face, int Row, int Col);
 	int GetRightMazeCellIndex(int Face, int Row, int Col);
 	int GetDownMazeCellIndex(int Face, int Row, int Col);
+
+	bool IsInLoop(int Face, int Row, int Col, int Direction, int& index);
+
+	void RemoveMazeCells();
 
 public:	
 	// Called every frame
