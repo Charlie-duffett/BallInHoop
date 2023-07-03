@@ -229,6 +229,7 @@ void AMazePawn::AddMazeCubeComponent(ConstructorHelpers::FObjectFinder<UStaticMe
 			CubeMeshComponent->Mobility = EComponentMobility::Movable;
 			CubeMeshComponent->CastShadow = false;
 			CubeMeshComponent->SetStaticMesh(CubeMeshAsset.Object);
+			CubeMeshComponent->BodyInstance.SetUseCCD(true);
 		}
 		else {
 			UE_LOG(LogTemp, Error, TEXT("CubeMeshAssetNew Is Missing!"));
