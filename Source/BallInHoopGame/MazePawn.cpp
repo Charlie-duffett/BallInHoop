@@ -35,6 +35,7 @@ AMazePawn::AMazePawn()
 		{
 			MazeBaseCubeComponent->Mobility = EComponentMobility::Movable;
 			MazeBaseCubeComponent->CastShadow = false;
+			MazeBaseCubeComponent->BodyInstance.SetUseCCD(true);
 			if (MazeBaseCubeComponent->SetStaticMesh(MazeBase.Object)) {
 				UE_LOG(LogTemp, Warning, TEXT("Static Mesh Set!"));
 			}
