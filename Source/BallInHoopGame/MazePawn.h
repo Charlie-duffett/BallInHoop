@@ -36,6 +36,8 @@ struct FMazeCell {
 	{}
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMazeCompletedEvent);
+
 UCLASS()
 class BALLINHOOPGAME_API AMazePawn : public APawn
 {
@@ -44,6 +46,8 @@ class BALLINHOOPGAME_API AMazePawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	AMazePawn();
+
+	
 
 protected:
 	// Called when the game starts or when spawned
@@ -57,6 +61,10 @@ protected:
 	const int MazeSideWidth = 11;
 	const int MazeSideHeight = 12;
 
+	// MazeComplete Event
+	UPROPERTY(BlueprintAssignable, Category = "MazeEvents")
+	FMazeCompletedEvent MazeCompleted;
+
 	TArray<FMazeCell> MazeCubeComponents;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -65,13 +73,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USceneComponent* DefaultSceneRootComponent;
 
-
 	void AddMazeCubes();
 	void AddMazeCubesTop(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, bool bSecondPass);
 	void AddMazeCubesSide(ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset, bool bSecondPass, int Face);
 	
 	FVector GetMazeCubeXVector(bool bSecondPass, int Row, int Col) const;
 	FVector GetMazeCubeYVector(bool bSecondPass, int Row, int Col) const;
+	UFUNCTION(BlueprintCallable)
 	FVector GetMazeCubeZVector(bool bSecondPass, int Row, int Col) const;
 
 	int GetCubeIndex(int Face, int Row, int Col);
@@ -93,6 +101,9 @@ protected:
 	bool IsInLoop(int Face, int Row, int Col, int Direction, int& index);
 
 	void RemoveMazeCells();
+
+	UFUNCTION(BlueprintCallable)
+	bool IsValidEnd(int Row, int Col);
 
 public:	
 	// Called every frame

@@ -7,6 +7,7 @@
 #include "Misc/CString.h"
 #include "Math/UnrealMathUtility.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Engine/StaticMeshActor.h"
 
 
 
@@ -78,8 +79,8 @@ void AMazePawn::BeginPlay()
 	MazeCubeComponents[index].CellComponent->DestroyComponent();*/
 
 	GenerateMaze();
-
 	RemoveMazeCells();
+	MazeCompleted.Broadcast();
 }
 
 void AMazePawn::EndPlay(EEndPlayReason::Type EndReason)
@@ -655,4 +656,13 @@ void AMazePawn::RemoveMazeCells() {
 			FMazeCell.CellComponent = nullptr;
 		}
 	}
+}
+
+bool AMazePawn::IsValidEnd(int Row, int Col) {
+	int index = GetCubeIndex(3, Row, Col);
+
+	if (MazeCubeComponents[index].bInMaze) {
+		return true;
+	}
+	return false;
 }
